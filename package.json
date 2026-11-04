@@ -2,7 +2,7 @@
   "name": "rift-consultor",
   "private": true,
   "type": "module",
-  "description": "Consultor de mazos de Riftbound con un catálogo local de Riftcodex.",
+  "description": "Consultor de mazos de Riftbound con un catálogo local, una carta por nombre.",
   "scripts": {
     "check": "tsc --noEmit",
     "check:decks": "node --experimental-strip-types scripts/check-legality.ts",

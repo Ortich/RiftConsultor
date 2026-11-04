@@ -2,7 +2,7 @@ import { defineAgent } from "@grok/agent-sdk";
 
 export default defineAgent({
   name: "RiftConsultor",
-  description: "Debate cambios de mazos de Riftbound contra un catálogo local de Riftcodex.",
+  description: "Debate cambios de mazos de Riftbound contra un catálogo local, una carta por nombre.",
   model: {
     id: "grok-4.7",
     params: [

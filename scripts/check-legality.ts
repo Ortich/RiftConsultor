@@ -15,7 +15,19 @@ function card(name: string, count: number): DeckCard {
 }
 
 function fits(item: Playable, domains: string[]): boolean {
-  return item.domains.every((domain) => domain === "Colorless" || domains.includes(domain));
+  return item.domains.every((domain) => domain === "Colorless" || domain === "Neutral" || domains.includes(domain));
+}
+
+function playableMain(item: Playable): boolean {
+  return (
+    item.bans.length === 0 &&
+    !item.unreleased &&
+    item.types.length > 0 &&
+    item.types.every((type) => type === "Unit" || type === "Spell" || type === "Gear") &&
+    item.supertype !== "Signature" &&
+    item.supertype !== "Token" &&
+    item.supertype !== "Champion"
+  );
 }
 
 function mainDeck(championName: string, pool: Playable[], domains: string[]): DeckCard[] | null {
@@ -23,10 +35,8 @@ function mainDeck(championName: string, pool: Playable[], domains: string[]): De
   let total = 1;
   for (const item of pool) {
     if (total >= 40) break;
-    if (item.name === championName || item.conflict || !fits(item, domains)) continue;
-    if (item.type !== "Unit" && item.type !== "Spell" && item.type !== "Gear") continue;
-    if (item.supertype === "Signature" || item.supertype === "Token" || item.supertype === "Champion") continue;
-    const count = Math.min(3, 40 - total);
+    if (item.name === championName || !playableMain(item) || !fits(item, domains)) continue;
+    const count = Math.min(item.copyLimit ?? 3, 40 - total);
     cards.push(card(item.name, count));
     total += count;
   }
@@ -40,7 +50,10 @@ expect(pause.paused === !hasRadiance, "la pausa no coincide con la presencia de 
 if (pause.paused) {
   expect(pause.missing.some((set) => set.setId === "RAD"), "parado, pero no por Radiance");
 }
-expect(stamp.cardCount === 1451, `el catálogo tiene ${stamp.cardCount} cartas, se esperaban 1451`);
+expect(stamp.cardCount === 1106, `el catálogo tiene ${stamp.cardCount} cartas, se esperaban 1106`);
+expect(stamp.radianceCards === 183, `Radiance tiene ${stamp.radianceCards} cartas, se esperaban 183`);
+expect(stamp.source.includes("openrift.app"), "la fuente del catálogo no es OpenRift");
+expect(!pause.paused, "el consultor sigue parado con Radiance en el catálogo");
 expect(stamp.fetchedAt !== null, "el manifiesto no tiene fetchedAt");
 expect(catalogSkipped() === 0, "hay cartas que el lector no entiende");
 
@@ -48,24 +61,56 @@ const tibbers = describeCard("Tibbers");
 expect(tibbers.status === "one" && tibbers.card.supertype === "Signature", "Tibbers no sale como Signature");
 expect(tibbers.status === "one" && tibbers.card.tags.includes("Annie"), "Tibbers no tiene el tag Annie");
 
-const jinx = describeCard("Jinx - Loose Cannon");
-expect(jinx.status === "one" && jinx.card.type === "Legend", "Jinx - Loose Cannon no es Legend");
+const jinx = describeCard("Loose Cannon");
+expect(jinx.status === "one" && jinx.card.type === "Legend", "Loose Cannon no es Legend");
 expect(
-  jinx.status === "one" && jinx.card.domains.includes("Fury") && jinx.card.domains.includes("Chaos"),
-  "la leyenda de Jinx no tiene Fury y Chaos",
+  jinx.status === "one" && jinx.card.domains.includes("Fury") && jinx.card.domains.includes("Chaos") && jinx.card.tags.includes("Jinx"),
+  "la leyenda de Jinx no tiene Fury, Chaos y el tag Jinx",
 );
 
-const rebel = describeCard("Jinx - Rebel (Alternate Art)");
-expect(rebel.status === "one" && rebel.card.name === "Jinx - Rebel", "el sufijo de edición no se ha quitado");
+const rebel = describeCard("Jinx, Rebel (Alternate Art)");
+expect(rebel.status === "one" && rebel.card.name === "Jinx, Rebel", "el sufijo de edición no se ha quitado");
+
+const ahri = describeCard("Ahri, Confident");
+expect(
+  ahri.status === "one" && ahri.card.sets.includes("RAD") && ahri.card.domains.includes("Calm") && ahri.card.text.includes("Disarm"),
+  "Ahri, Confident no está en Radiance o no trae Disarm",
+);
+expect(ahri.status === "one" && ahri.card.text.includes(":rb_might:"), "el texto de Ahri ha perdido el símbolo :rb_might:");
+expect(describeCard("ahri-confident").status === "one", "el slug de Ahri no resuelve");
+expect(describeCard("RAD-038/167-EN").status === "one", "el código de Ahri no resuelve");
+
+const loose = describeCard("Loose Cannon");
+const spider = describeCard("Spiderling");
+if (loose.status === "one" && spider.status === "one") {
+  const swarm = checkDeck({
+    id: "zz-test-legalidad",
+    name: "Arañas",
+    legend: loose.card.name,
+    chosenChampion: "Jinx, Rebel",
+    strategy: "Cualquier número de Spiderling.",
+    meta: "Prueba local.",
+    main: [card("Jinx, Rebel", 1), card("Spiderling", 6)],
+    runes: [],
+    battlefields: [],
+    sideboard: [],
+  });
+  expect(
+    !swarm.errors.some((issue) => issue.code === "copy_limit" && issue.message.includes("Spiderling")),
+    "Spiderling no admite cualquier número de copias",
+  );
+  expect(swarm.errors.some((issue) => issue.code === "main_size"), "un main corto de Spiderling no avisa el tamaño");
+}
 
 const pool = allPlayables();
-const legend = pool.find((item) => item.conflict === null && item.type === "Legend" && item.tags.length > 0);
+const legend = pool.find((item) => item.bans.length === 0 && !item.unreleased && item.type === "Legend" && item.tags.length > 0);
 const champion =
   legend === undefined
     ? undefined
     : pool.find(
         (item) =>
-          item.conflict === null &&
+          item.bans.length === 0 &&
+          !item.unreleased &&
           item.type === "Unit" &&
           item.supertype === "Champion" &&
           legend.tags.every((tag) => item.tags.includes(tag)) &&
@@ -74,18 +119,20 @@ const champion =
 const rune =
   legend === undefined
     ? undefined
-    : pool.find((item) => item.conflict === null && item.type === "Rune" && fits(item, legend.domains));
+    : pool.find((item) => item.bans.length === 0 && item.type === "Rune" && fits(item, legend.domains));
 const offRune =
   legend === undefined
     ? undefined
     : pool.find(
         (item) =>
-          item.conflict === null &&
+          item.bans.length === 0 &&
           item.type === "Rune" &&
-          item.domains.some((domain) => domain !== "Colorless" && !legend.domains.includes(domain)),
+          item.domains.some((domain) => domain !== "Colorless" && domain !== "Neutral" && !legend.domains.includes(domain)),
       );
 const fields =
-  legend === undefined ? [] : pool.filter((item) => item.conflict === null && item.type === "Battlefield" && fits(item, legend.domains));
+  legend === undefined
+    ? []
+    : pool.filter((item) => item.bans.length === 0 && item.type === "Battlefield" && fits(item, legend.domains));
 
 expect(legend !== undefined && champion !== undefined, "no hay una pareja leyenda/campeón legal en el catálogo");
 expect(rune !== undefined && offRune !== undefined, "no hay runas de prueba");
@@ -119,9 +166,40 @@ if (legend && champion && rune && offRune && fields.length >= 3) {
     const offDomain = checkDeck({ ...base, runes: [card(offRune.name, 12)] });
     expect(offDomain.errors.some((issue) => issue.code === "domain"), "una runa de otro dominio pasa el filtro");
 
-    const bumped = main.map((entry, index) => (index === 1 ? { ...entry, count: entry.count + 1 } : entry));
-    const fourth = checkDeck({ ...base, main: bumped });
-    expect(fourth.errors.some((issue) => issue.code === "copy_limit"), "la cuarta copia no se detecta");
+    const bumpAt = main.findIndex((entry, index) => index > 0 && pool.find((item) => item.name === entry.name)?.copyLimit === 3);
+    expect(bumpAt > 0, "no hay una carta con máximo 3 para la prueba de copias");
+    if (bumpAt > 0) {
+      const bumped = main.map((entry, index) => (index === bumpAt ? { ...entry, count: entry.count + 1 } : entry));
+      const fourth = checkDeck({ ...base, main: bumped });
+      expect(fourth.errors.some((issue) => issue.code === "copy_limit"), "la cuarta copia no se detecta");
+    }
+
+    const neekoAt = main.findIndex((entry, index) => index > 0);
+    if (neekoAt > 0) {
+      const withNeeko = main.map((entry, index) => (index === neekoAt ? card("Neeko, Blending In", 1) : entry));
+      const neutral = checkDeck({ ...base, main: withNeeko });
+      expect(
+        !neutral.errors.some((issue) => issue.code === "domain" && issue.message.includes("Neeko")),
+        "Neeko, de dominio Neutral, no entra en el mazo",
+      );
+    }
+
+    const bannedAt = main.findIndex((entry, index) => index > 0);
+    if (bannedAt > 0) {
+      const withBan = main.map((entry, index) => (index === bannedAt ? card("Fight or Flight", 1) : entry));
+      const banned = checkDeck({ ...base, main: withBan });
+      expect(banned.errors.some((issue) => issue.code === "banned"), "Fight or Flight no sale como baneada");
+    }
+
+    const spider = pool.find((item) => item.name === "Spiderling");
+    if (spider && fits(spider, legend.domains)) {
+      const withSpiders = main.map((entry, index) => (index === 1 ? card("Spiderling", 6) : entry));
+      const unlimited = checkDeck({ ...base, main: withSpiders });
+      expect(
+        !unlimited.errors.some((issue) => issue.code === "copy_limit" && issue.message.includes("Spiderling")),
+        "Spiderling no admite cualquier número de copias",
+      );
+    }
   }
 }
 
@@ -137,9 +215,7 @@ if (kennen.status === "one" && rush.status === "one") {
       fits(item, kennen.card.domains),
   );
   const kennenRune = pool.find((item) => item.type === "Rune" && fits(item, kennen.card.domains));
-  const kennenFields = pool.filter(
-    (item) => item.conflict === null && item.type === "Battlefield" && fits(item, kennen.card.domains),
-  );
+  const kennenFields = pool.filter((item) => item.bans.length === 0 && item.type === "Battlefield" && fits(item, kennen.card.domains));
   const kennenMain = kennenChampion ? mainDeck(kennenChampion.name, pool, kennen.card.domains) : null;
   expect(kennenChampion !== undefined && kennenRune !== undefined && kennenFields.length >= 3 && kennenMain !== null, "faltan piezas de Kennen");
   if (kennenChampion && kennenRune && kennenFields.length >= 3 && kennenMain) {
@@ -189,8 +265,8 @@ try {
     id: probeId,
     name: "Prueba",
     format: "constructed",
-    legend: "Jinx - Loose Cannon",
-    chosenChampion: "Jinx - Rebel",
+    legend: "Loose Cannon",
+    chosenChampion: "Jinx, Rebel",
     strategy: "Prueba de escritura.",
     meta: "",
     main: [],

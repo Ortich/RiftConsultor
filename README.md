@@ -1,22 +1,22 @@
 # RiftConsultor
 
-Consultor de mazos de Riftbound. Las cartas viven en este repositorio, descargadas de [Riftcodex](https://api.riftcodex.com/cards), y los mazos se guardan con su estrategia y con el meta contra el que van.
+Consultor de mazos de Riftbound. Las cartas viven en este repositorio, una ficha por nombre, y los mazos se guardan con su estrategia y con el meta contra el que van.
 
-**Parado.** Radiance (RAD) salió el 23 de octubre de 2026 y Riftcodex todavía no la lista. Hasta que `npm run sync-cards` traiga cartas de ese set, el consultor no cita cartas ni debate mazos.
+El consultor no busca cartas en la web. Si una carta no está en `data/catalog/cards.json`, tiene que decirlo. Un arte alternativo, un acabado o un idioma no son otra carta.
 
-El consultor no busca cartas en la web. Si una carta no está en `data/catalog/cards.json`, tiene que decirlo.
+Radiance está en esta descarga: 183 cartas con set `RAD`. Legacy y Reckoning no han salido. Secret Garden está fechado el 1 de diciembre de 2026. Esas tres no hacen falta para usar el consultor. Si un `npm run sync-cards` futuro deja Radiance fuera, las herramientas se paran solas.
 
 ## Catálogo
 
-`data/catalog/cards.json` es la respuesta de `GET https://api.riftcodex.com/cards`, una fila por edición. `data/catalog/manifest.json` dice cuándo se descargó. Si dos ediciones del mismo nombre no coinciden, la herramienta avisa y usa la edición base.
+`data/catalog/cards.json` sale de `GET https://openrift.app/api/v1/catalog`. `data/catalog/manifest.json` dice cuándo se descargó y cuántas cartas quedaron. El texto de reglas es el de la edición inglesa normal, o el de la errata cuando el catálogo trae una: en ese caso la ficha guarda la fuente. Los símbolos se quedan como `:rb_might:` o `:rb_energy_2:`.
+
+Doce cartas traen un ban de constructed en la propia ficha. El consultor no añade otros.
 
 Para refrescarlo:
 
 ```bash
 npm run sync-cards
 ```
-
-`curl` contra la API recibe un 403 de Cloudflare. El script prueba `fetch` y, si no pasa, usa Chrome.
 
 ## Mazos
 

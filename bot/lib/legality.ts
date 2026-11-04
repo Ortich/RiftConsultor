@@ -52,7 +52,37 @@ function sum(cards: DeckCard[]): number {
 }
 
 function meaningfulDomains(domains: string[]): string[] {
-  return domains.filter((domain) => domain !== "Colorless");
+  return domains.filter((domain) => domain !== "Colorless" && domain !== "Neutral");
+}
+
+function cardTypes(card: Playable): string[] {
+  return card.types.length > 0 ? card.types : [card.type];
+}
+
+function isMainCard(card: Playable): boolean {
+  const types = cardTypes(card);
+  return types.length > 0 && types.every((type) => MAIN_TYPES.has(type));
+}
+
+function availabilityIssues(card: Playable): DeckIssue[] {
+  const issues: DeckIssue[] = [];
+  if (card.unreleased) {
+    issues.push({
+      level: "error",
+      code: "unreleased",
+      message: `«${card.name}» solo está en una colección que todavía no se ha publicado.`,
+    });
+  }
+  const ban = card.bans[0];
+  if (ban) {
+    const reason = ban.reason.length > 0 ? ` ${ban.reason}` : "";
+    issues.push({
+      level: "error",
+      code: "banned",
+      message: `«${card.name}» está baneada en constructed desde ${ban.bannedAt}.${reason}`,
+    });
+  }
+  return issues;
 }
 
 function domainLegal(card: Playable, legendDomains: string[]): boolean {
@@ -110,13 +140,6 @@ function pushCopyLimits(issues: DeckIssue[], zones: { zone: string; cards: DeckC
         issues.push(resolved.issue);
         continue;
       }
-      if (resolved.card.conflict) {
-        issues.push({
-          level: "warning",
-          code: "conflict_card",
-          message: `${zone.zone}: «${resolved.card.name}» tiene ediciones que no coinciden. Uso la edición base.`,
-        });
-      }
       const key = resolved.card.name.toLowerCase();
       if (seen.has(key)) {
         issues.push({
@@ -139,10 +162,9 @@ function pushCopyLimits(issues: DeckIssue[], zones: { zone: string; cards: DeckC
 }
 
 /**
- * Constructed checks pinned from the core rules and the 9 Oct 2026 tournament
- * rules: 40 main, 12 runes, 3 unique battlefields, sideboard 0–10, 3-of,
- * 3 signatures. Colorless is treated as no domain requirement.
- * This is not a ban list.
+ * Constructed checks: 40 main, 12 runes, 3 unique battlefields, sideboard 0–10,
+ * 3-of unless the card sets another limit, 3 signatures. Colorless and Neutral
+ * add no domain requirement. Bans are only the ones stored on the card.
  */
 export function checkDeck(input: DeckInput): DeckCheck {
   const errors: DeckIssue[] = [];
@@ -171,13 +193,7 @@ export function checkDeck(input: DeckInput): DeckCheck {
     });
   } else {
     legend = legendResolved.card;
-    if (legend.conflict) {
-      warnings.push({
-        level: "warning",
-        code: "conflict_card",
-        message: `La leyenda «${legend.name}» tiene ediciones que no coinciden en el catálogo. Uso la edición base.`,
-      });
-    }
+    errors.push(...availabilityIssues(legend));
   }
 
   const combined = pushCopyLimits(issues, [
@@ -195,6 +211,7 @@ export function checkDeck(input: DeckInput): DeckCheck {
   let signatures = 0;
   if (legend) {
     for (const entry of combined.values()) {
+      errors.push(...availabilityIssues(entry.card));
       if (!domainLegal(entry.card, legend.domains)) {
         errors.push({
           level: "error",
@@ -202,17 +219,17 @@ export function checkDeck(input: DeckInput): DeckCheck {
           message: `«${entry.card.name}» pide ${entry.card.domains.join(" + ") || "sin dominio"}, y la leyenda es ${legend.domains.join(" + ")}.`,
         });
       }
-      if (entry.card.supertype === "Token" || entry.card.type === "Token") {
+      if (entry.card.supertype === "Token") {
         errors.push({
           level: "error",
           code: "token",
           message: `«${entry.card.name}» es un token y no entra en el mazo.`,
         });
-      } else if (!MAIN_TYPES.has(entry.card.type)) {
+      } else if (!isMainCard(entry.card)) {
         errors.push({
           level: "error",
           code: "wrong_type",
-          message: `«${entry.card.name}» es ${entry.card.type} y no puede ir en el main ni en el sideboard.`,
+          message: `«${entry.card.name}» es ${cardTypes(entry.card).join(" + ")} y no puede ir en el main ni en el sideboard.`,
         });
       }
       if (entry.card.supertype === "Signature") {
@@ -225,16 +242,17 @@ export function checkDeck(input: DeckInput): DeckCheck {
           });
         }
       }
-      if (entry.count > 3) {
+      if (entry.card.copyLimit !== null && entry.count > entry.card.copyLimit) {
         errors.push({
           level: "error",
           code: "copy_limit",
-          message: `«${entry.card.name}» suma ${entry.count} copias entre main y sideboard. El máximo es 3.`,
+          message: `«${entry.card.name}» suma ${entry.count} copias entre main y sideboard. El máximo es ${entry.card.copyLimit}.`,
         });
       }
     }
     for (const entry of runeTotals.values()) {
-      if (entry.card.type !== "Rune") {
+      errors.push(...availabilityIssues(entry.card));
+      if (!cardTypes(entry.card).includes("Rune")) {
         errors.push({
           level: "error",
           code: "wrong_type",
@@ -249,7 +267,8 @@ export function checkDeck(input: DeckInput): DeckCheck {
       }
     }
     for (const entry of fieldTotals.values()) {
-      if (entry.card.type !== "Battlefield") {
+      errors.push(...availabilityIssues(entry.card));
+      if (!cardTypes(entry.card).includes("Battlefield")) {
         errors.push({
           level: "error",
           code: "wrong_type",
@@ -323,7 +342,7 @@ export function checkDeck(input: DeckInput): DeckCheck {
       message: `«${input.chosenChampion}» tiene que estar en el main. Esa copia es la que empieza en la zona de campeón.`,
     });
   } else if (legend) {
-    if (champion.card.type !== "Unit" || champion.card.supertype !== "Champion") {
+    if (!cardTypes(champion.card).includes("Unit") || champion.card.supertype !== "Champion") {
       errors.push({
         level: "error",
         code: "chosen_champion",

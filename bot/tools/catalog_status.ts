@@ -5,7 +5,7 @@ import { catalogPause, catalogStamp } from "../lib/catalog.ts";
 
 export default defineTool({
   description:
-    "Dice si el consultor puede trabajar. Está parado mientras falte una colección publicada, ahora mismo Radiance (RAD).",
+    "Dice si el consultor puede trabajar. Está parado si falta Radiance (RAD) en el catálogo local.",
   effect: "read",
   inputSchema: z.object({}),
   execute() {

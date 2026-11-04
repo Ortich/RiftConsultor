@@ -1,8 +1,10 @@
 {
-  "source": "https://api.riftcodex.com/cards",
-  "setsSource": "https://api.riftcodex.com/sets",
-  "fetchedAt": "2026-11-04T10:23:55Z",
-  "cardCount": 1451,
-  "setCount": 8,
-  "sha256": "24f7386486a2e6d7d44d7af8b494b49cc177c3d804d4b4f94e09e1c9a6649001"
+  "source": "https://openrift.app/api/v1/catalog",
+  "fetchedAt": "2026-11-04T15:45:31.162Z",
+  "cardCount": 1106,
+  "printingCount": 9051,
+  "setCount": 14,
+  "radianceCards": 183,
+  "sha256": "43c3f9db8405ae7f5f65bcff6a6b45b3c822db2608d8e785ea92fda69ecb1525",
+  "note": "Una carta por nombre. Los artes alternativos, acabados e idiomas no se guardan como cartas distintas."
 }

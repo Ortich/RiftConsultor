@@ -5,10 +5,10 @@ import { catalogPause, catalogStamp, searchCards } from "../lib/catalog.ts";
 
 export default defineTool({
   description:
-    "Busca cartas en el catálogo local de Riftcodex. No usa la red. Agrupa las ediciones de un mismo nombre.",
+    "Busca cartas en el catálogo local. No usa la red. Hay una ficha por nombre; los artes alternativos no salen aparte.",
   effect: "read",
   inputSchema: z.object({
-    query: z.string().optional().describe("Nombre, tag, id riftbound o texto."),
+    query: z.string().optional().describe("Nombre, tag, slug, código o texto."),
     type: z.string().optional().describe("Unit, Spell, Gear, Legend, Battlefield o Rune."),
     supertype: z.string().optional().describe("Champion, Signature, Basic o Token."),
     domain: z.string().optional().describe("Un dominio, por ejemplo Fury."),
@@ -42,8 +42,9 @@ export default defineTool({
         power: card.power,
         text: card.text,
         sets: card.sets,
-        printingCount: card.printingCount,
-        conflict: card.conflict,
+        copyLimit: card.copyLimit,
+        banned: card.bans.length > 0,
+        unreleased: card.unreleased,
       })),
     };
   },

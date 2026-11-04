@@ -34,10 +34,13 @@ Run the CLI under Node, never Bun.
 
 ## Catalog
 
-Card text comes from `data/catalog/cards.json`, fetched from
-`https://api.riftcodex.com/cards`. Refresh it with `npm run sync-cards`.
-Deck lists live in `data/decks/<id>.json`. `npm run check:decks` checks
-the reader and constructed rules without a model call.
+Card text comes from `data/catalog/cards.json`: one record per playable
+card, reduced from `https://openrift.app/api/v1/catalog`. Alternate arts,
+finishes, and languages are not separate cards. Refresh it with
+`npm run sync-cards`. The consultor stays paused unless that file contains
+set `RAD`. Deck lists live in `data/decks/<id>.json`. `npm run check:decks`
+checks the reader and constructed rules without a model call. It expects
+1106 cards and 183 in Radiance.
 
 ## Pointers
 
