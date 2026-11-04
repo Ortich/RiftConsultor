@@ -6,7 +6,7 @@
   "scripts": {
     "check": "tsc --noEmit",
     "check:decks": "node --experimental-strip-types scripts/check-legality.ts",
-    "sync-cards": "node scripts/sync-cards.mjs",
+    "sync-cards": "node --experimental-strip-types scripts/sync-cards.mjs",
     "dev": "agent-sdk dev"
   },
   "dependencies": {

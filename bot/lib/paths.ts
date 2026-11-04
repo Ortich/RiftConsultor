@@ -8,4 +8,5 @@ export const projectRoot = path.resolve(here, "../..");
 
 export const catalogFile = path.join(projectRoot, "data/catalog/cards.json");
 export const manifestFile = path.join(projectRoot, "data/catalog/manifest.json");
+export const sourcesFile = path.join(projectRoot, "data/catalog/sources.json");
 export const decksDir = path.join(projectRoot, "data/decks");

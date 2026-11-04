@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 
+import { parseCard } from "./card.ts";
 import { catalogFile, manifestFile } from "./paths.ts";
 
 /** Printing suffix a deck list may still append. It is not a different card. */
@@ -72,71 +73,37 @@ export function baseName(name: string): string {
   }
 }
 
-function stringList(value: unknown): string[] {
-  if (!Array.isArray(value)) return [];
-  return value.filter((item): item is string => typeof item === "string" && item.length > 0);
-}
-
-function numberOrNull(value: unknown): number | null {
-  return typeof value === "number" && Number.isFinite(value) ? value : null;
-}
-
-function asErrata(value: unknown): CardErrata | null {
-  if (value === null || typeof value !== "object") return null;
-  const raw = value as Record<string, unknown>;
-  const source = typeof raw.source === "string" ? raw.source : "";
-  const sourceUrl = typeof raw.sourceUrl === "string" ? raw.sourceUrl : "";
-  const effectiveDate = typeof raw.effectiveDate === "string" ? raw.effectiveDate : "";
-  if (source.length === 0 && sourceUrl.length === 0 && effectiveDate.length === 0) return null;
-  return { source, sourceUrl, effectiveDate };
-}
-
-function asBans(value: unknown): CardBan[] {
-  if (!Array.isArray(value)) return [];
-  const bans: CardBan[] = [];
-  for (const item of value) {
-    if (item === null || typeof item !== "object") continue;
-    const raw = item as Record<string, unknown>;
-    if (typeof raw.format !== "string" || raw.format.length === 0) continue;
-    bans.push({
-      format: raw.format,
-      bannedAt: typeof raw.bannedAt === "string" ? raw.bannedAt : "",
-      reason: typeof raw.reason === "string" ? raw.reason : "",
-    });
-  }
-  return bans;
-}
-
 function asCard(raw: unknown): StoredCard | null {
-  if (raw === null || typeof raw !== "object") return null;
-  const card = raw as Record<string, unknown>;
-  if (typeof card.name !== "string" || card.name.trim().length === 0) return null;
-  const types = stringList(card.types);
-  if (types.length === 0) return null;
-  const supertype = typeof card.supertype === "string" && card.supertype.length > 0 ? card.supertype : null;
-  const playable: Playable = {
-    name: card.name.trim(),
-    slug: typeof card.slug === "string" && card.slug.length > 0 ? card.slug : card.name.trim(),
-    type: types[0] ?? "",
-    types,
-    supertype,
-    rarity: typeof card.rarity === "string" ? card.rarity : "",
-    rarities: stringList(card.rarities),
-    domains: stringList(card.domains),
-    tags: stringList(card.tags),
-    keywords: stringList(card.keywords),
-    energy: numberOrNull(card.energy),
-    might: numberOrNull(card.might),
-    power: numberOrNull(card.power),
-    text: typeof card.text === "string" ? card.text : "",
-    errata: asErrata(card.errata),
-    sets: stringList(card.sets),
-    collectorCode: typeof card.collectorCode === "string" && card.collectorCode.length > 0 ? card.collectorCode : null,
-    copyLimit: card.copyLimit === null ? null : (numberOrNull(card.copyLimit) ?? 3),
-    bans: asBans(card.bans),
-    unreleased: card.unreleased === true,
+  const parsed = parseCard(raw);
+  if (!parsed.ok) return null;
+  const card = parsed.card;
+  const type = card.types[0];
+  if (!type) return null;
+  return {
+    card: {
+      name: card.name,
+      slug: card.slug,
+      type,
+      types: card.types,
+      supertype: card.supertype,
+      rarity: card.rarity,
+      rarities: card.rarities,
+      domains: card.domains,
+      tags: card.tags,
+      keywords: card.keywords,
+      energy: card.energy,
+      might: card.might,
+      power: card.power,
+      text: card.text,
+      errata: card.errata,
+      sets: card.sets,
+      collectorCode: card.collectorCode,
+      copyLimit: card.copyLimit,
+      bans: card.bans,
+      unreleased: card.unreleased,
+    },
+    codes: card.codes,
   };
-  return { card: playable, codes: stringList(card.codes) };
 }
 
 function readManifest(): Manifest {
@@ -152,12 +119,18 @@ export function loadCatalog(): { cards: StoredCard[]; stamp: CatalogStamp; skipp
   const raw = JSON.parse(readFileSync(catalogFile, "utf8")) as unknown;
   if (!Array.isArray(raw)) throw new Error("data/catalog/cards.json tiene que ser un array de cartas.");
   const cards: StoredCard[] = [];
-  let skipped = 0;
+  const problems: string[] = [];
   for (const item of raw) {
     const card = asCard(item);
-    if (card === null) skipped += 1;
-    else cards.push(card);
+    if (card === null) {
+      const parsed = parseCard(item);
+      problems.push(parsed.ok ? "carta vacía" : parsed.message);
+    } else cards.push(card);
   }
+  if (problems.length > 0) {
+    throw new Error(`El catálogo no cumple el modelo de carta (${problems.length}). ${problems[0]}`);
+  }
+  const skipped = 0;
   cards.sort((left, right) => left.card.name.localeCompare(right.card.name, "es"));
   const manifest = readManifest();
   const radianceCards = cards.filter((entry) => entry.card.sets.includes("RAD")).length;

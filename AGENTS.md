@@ -35,12 +35,14 @@ Run the CLI under Node, never Bun.
 ## Catalog
 
 Card text comes from `data/catalog/cards.json`: one record per playable
-card, reduced from `https://openrift.app/api/v1/catalog`. Alternate arts,
-finishes, and languages are not separate cards. Refresh it with
-`npm run sync-cards`. The consultor stays paused unless that file contains
-set `RAD`. Deck lists live in `data/decks/<id>.json`. `npm run check:decks`
-checks the reader and constructed rules without a model call. It expects
-1106 cards and 183 in Radiance.
+card. The record shape is `bot/lib/card.ts` (`cardSchema`); every card has
+the same fields. Known download origins live in `data/catalog/sources.json`.
+`npm run sync-cards` reads the active origin. Only `openrift` is normalized
+today. Alternate arts, finishes, and languages are not separate cards. The
+consultor stays paused unless the file contains set `RAD`. Deck lists live
+in `data/decks/<id>.json`. `npm run check:decks` checks the reader, the card
+model, and constructed rules without a model call. It expects 1106 cards
+and 183 in Radiance.
 
 ## Pointers
 

@@ -1,8 +1,11 @@
-import { rmSync } from "node:fs";
+import { readFileSync, rmSync } from "node:fs";
 
+import { CARD_FIELDS } from "../bot/lib/card.ts";
 import { allPlayables, catalogPause, catalogSkipped, catalogStamp, describeCard, type Playable } from "../bot/lib/catalog.ts";
 import { readDeck, writeDeck } from "../bot/lib/decks.ts";
 import { checkDeck, type DeckCard, type DeckInput } from "../bot/lib/legality.ts";
+import { catalogFile } from "../bot/lib/paths.ts";
+import { loadSources } from "../bot/lib/sources.ts";
 
 const failures: string[] = [];
 
@@ -52,7 +55,18 @@ if (pause.paused) {
 }
 expect(stamp.cardCount === 1106, `el catálogo tiene ${stamp.cardCount} cartas, se esperaban 1106`);
 expect(stamp.radianceCards === 183, `Radiance tiene ${stamp.radianceCards} cartas, se esperaban 183`);
+const sources = loadSources();
+expect(sources.active.id === "openrift", "el origen activo no es OpenRift");
+expect(sources.active.endpoints.catalog === stamp.source, "el manifiesto no apunta al origen activo");
+expect(sources.sources.some((source) => source.id === "rifthunt" && source.hasRadiance), "falta RiftHunt como origen con Radiance");
+expect(sources.sources.some((source) => source.id === "riftcodex" && source.hasRadiance === false), "falta Riftcodex como origen sin Radiance");
 expect(stamp.source.includes("openrift.app"), "la fuente del catálogo no es OpenRift");
+const rawCards = JSON.parse(readFileSync(catalogFile, "utf8")) as unknown[];
+const fieldOrder = CARD_FIELDS.join(",");
+const disordered = rawCards.find(
+  (item) => item === null || typeof item !== "object" || Object.keys(item).join(",") !== fieldOrder,
+);
+expect(disordered === undefined, "hay una carta que no trae los campos del modelo, en ese orden");
 expect(!pause.paused, "el consultor sigue parado con Radiance en el catálogo");
 expect(stamp.fetchedAt !== null, "el manifiesto no tiene fetchedAt");
 expect(catalogSkipped() === 0, "hay cartas que el lector no entiende");

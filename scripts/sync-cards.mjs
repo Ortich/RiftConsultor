@@ -3,9 +3,18 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { parseCard } from "../bot/lib/card.ts";
+import { loadSources } from "../bot/lib/sources.ts";
+
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const outDir = path.join(root, "data/catalog");
-const catalogUrl = "https://openrift.app/api/v1/catalog";
+const source = loadSources().active;
+const catalogUrl = source.endpoints.catalog;
+if (source.id !== "openrift" || typeof catalogUrl !== "string") {
+  throw new Error(
+    `La descarga solo normaliza OpenRift. El origen activo es ${source.id}. Los demás están anotados en data/catalog/sources.json.`,
+  );
+}
 
 const SET_ORDER = ["OGN", "SFD", "UNL", "VEN", "RAD", "OGS", "FND", "ARC", "T1A", "T1S", "KDA", "SGN", "LGC", "REC"];
 
@@ -209,30 +218,32 @@ function normalize(catalog, fetchedAt) {
     }
     codes.sort();
     const copyLimit = card.maxCopiesOverride === 0 ? null : typeof card.maxCopiesOverride === "number" ? card.maxCopiesOverride : 3;
-    playables.push({
-      id,
-      slug: typeof card.slug === "string" ? card.slug : id,
+    const parsed = parseCard({
       name,
+      text,
+      energy: typeof card.energy === "number" ? card.energy : null,
+      might: typeof card.might === "number" ? card.might : null,
+      power: typeof card.power === "number" ? card.power : null,
       types: labelsOf(card.types, typeLabels),
       supertype: labelsOf(card.superTypes, superLabels)[0] ?? null,
       domains: labelsOf(card.domains, domainLabels),
       tags: Array.isArray(card.tags) ? card.tags.filter((tag) => typeof tag === "string") : [],
       keywords: Array.isArray(card.keywords) ? card.keywords.filter((keyword) => typeof keyword === "string") : [],
-      energy: typeof card.energy === "number" ? card.energy : null,
-      might: typeof card.might === "number" ? card.might : null,
-      power: typeof card.power === "number" ? card.power : null,
-      text,
-      errata: errata.note,
       sets: setIds,
       rarity: preferredRarity,
       rarities,
+      copyLimit,
+      bans: bansOf(card.bans),
+      errata: errata.note,
+      unreleased: setIds.length > 0 && releasedSets.length === 0,
+      slug: typeof card.slug === "string" ? card.slug : id,
+      id,
       collectorCode: typeof preferred?.publicCode === "string" ? preferred.publicCode : null,
       codes,
       printingCount: englishBase.length,
-      copyLimit,
-      bans: bansOf(card.bans),
-      unreleased: setIds.length > 0 && releasedSets.length === 0,
     });
+    if (!parsed.ok) throw new Error(parsed.message);
+    playables.push(parsed.card);
   }
   playables.sort((left, right) => left.name.localeCompare(right.name, "es"));
   const radianceCards = playables.filter((card) => card.sets.includes("RAD")).length;
@@ -265,6 +276,7 @@ mkdirSync(outDir, { recursive: true });
 writeFileSync(path.join(outDir, "cards.json"), cardsJson);
 writeFileSync(path.join(outDir, "sets.json"), `${JSON.stringify(normalized.sets, null, 2)}\n`);
 const manifest = {
+  sourceId: source.id,
   source: catalogUrl,
   fetchedAt,
   cardCount: normalized.cards.length,
