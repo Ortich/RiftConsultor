@@ -1,0 +1,8 @@
+{
+  "source": "https://api.riftcodex.com/cards",
+  "setsSource": "https://api.riftcodex.com/sets",
+  "fetchedAt": "2026-11-04T10:23:55Z",
+  "cardCount": 1451,
+  "setCount": 8,
+  "sha256": "24f7386486a2e6d7d44d7af8b494b49cc177c3d804d4b4f94e09e1c9a6649001"
+}

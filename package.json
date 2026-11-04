@@ -1,0 +1,20 @@
+{
+  "name": "rift-consultor",
+  "private": true,
+  "type": "module",
+  "description": "Consultor de mazos de Riftbound con un catálogo local de Riftcodex.",
+  "scripts": {
+    "check": "tsc --noEmit",
+    "check:decks": "node --experimental-strip-types scripts/check-legality.ts",
+    "sync-cards": "node scripts/sync-cards.mjs",
+    "dev": "agent-sdk dev"
+  },
+  "dependencies": {
+    "@grok/agent-sdk": "^0.6.0",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.0",
+    "typescript": "6.0.3"
+  }
+}
