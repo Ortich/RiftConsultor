@@ -1,6 +1,7 @@
 import { defineTool } from "@grok/agent-sdk/tools";
 import * as z from "zod/v4";
 
+import { catalogPause } from "../lib/catalog.ts";
 import { listDecks } from "../lib/decks.ts";
 
 export default defineTool({
@@ -8,6 +9,8 @@ export default defineTool({
   effect: "read",
   inputSchema: z.object({}),
   execute() {
+    const pause = catalogPause();
+    if (pause.paused) return pause;
     const decks = listDecks().map(({ deck, check }) => ({
       id: deck.id,
       name: deck.name,

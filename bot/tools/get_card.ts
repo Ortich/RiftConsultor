@@ -1,7 +1,7 @@
 import { defineTool } from "@grok/agent-sdk/tools";
 import * as z from "zod/v4";
 
-import { catalogStamp, describeCard } from "../lib/catalog.ts";
+import { catalogPause, catalogStamp, describeCard } from "../lib/catalog.ts";
 
 export default defineTool({
   description:
@@ -11,6 +11,8 @@ export default defineTool({
     name: z.string().min(1).describe("Nombre de la carta o riftbound_id."),
   }),
   execute({ name }) {
+    const pause = catalogPause();
+    if (pause.paused) return pause;
     const found = describeCard(name);
     if (found.status === "none") {
       return { found: false, catalog: catalogStamp(), message: `«${name}» no está en el catálogo local.` };

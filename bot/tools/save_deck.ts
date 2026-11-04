@@ -1,7 +1,7 @@
 import { defineTool } from "@grok/agent-sdk/tools";
 import * as z from "zod/v4";
 
-import { catalogStamp } from "../lib/catalog.ts";
+import { catalogPause, catalogStamp } from "../lib/catalog.ts";
 import { writeDeck, type StoredDeck } from "../lib/decks.ts";
 import { checkDeck, type DeckCard } from "../lib/legality.ts";
 
@@ -40,6 +40,8 @@ export default defineTool({
     commit: z.boolean().optional().describe("True solo cuando el usuario pide guardar esta versión."),
   }),
   execute(input, ctx) {
+    const pause = catalogPause();
+    if (pause.paused) return { saved: false, ...pause };
     const deckInput = {
       id: input.id,
       name: input.name,

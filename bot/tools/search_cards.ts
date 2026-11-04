@@ -1,7 +1,7 @@
 import { defineTool } from "@grok/agent-sdk/tools";
 import * as z from "zod/v4";
 
-import { catalogStamp, searchCards } from "../lib/catalog.ts";
+import { catalogPause, catalogStamp, searchCards } from "../lib/catalog.ts";
 
 export default defineTool({
   description:
@@ -18,6 +18,8 @@ export default defineTool({
     limit: z.number().int().min(1).max(20).optional(),
   }),
   execute(input) {
+    const pause = catalogPause();
+    if (pause.paused) return pause;
     const query = input.query?.trim() ?? "";
     const hasFilter = [input.type, input.supertype, input.domain, input.setId, input.rarity, input.tag].some(
       (value) => value !== undefined && value.trim().length > 0,

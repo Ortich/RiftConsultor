@@ -274,6 +274,37 @@ export function catalogStamp(): CatalogStamp {
   return loadCatalog().stamp;
 }
 
+/** Released sets the consultor refuses to work without. Legacy is not out yet. */
+const REQUIRED_SETS = [{ setId: "RAD", name: "Radiance" }] as const;
+
+export type CatalogPause =
+  | { paused: false }
+  | {
+      paused: true;
+      missing: { setId: string; name: string }[];
+      message: string;
+    };
+
+export function catalogPause(): CatalogPause {
+  const present = new Set<string>();
+  for (const group of loadCatalog().groups) {
+    for (const printing of group.printings) {
+      if (printing.setId.length > 0) present.add(printing.setId);
+    }
+  }
+  const missing = REQUIRED_SETS.filter((set) => !present.has(set.setId)).map((set) => ({
+    setId: set.setId,
+    name: set.name,
+  }));
+  if (missing.length === 0) return { paused: false };
+  const names = missing.map((set) => `${set.name} (${set.setId})`).join(", ");
+  return {
+    paused: true,
+    missing,
+    message: `El consultor está parado. Falta ${names} en el catálogo de Riftcodex. No cita cartas ni debate mazos hasta que esa colección esté en la descarga.`,
+  };
+}
+
 export function allPlayables(): Playable[] {
   return loadCatalog().groups.map((group) => group.playable);
 }

@@ -1,6 +1,6 @@
 import { rmSync } from "node:fs";
 
-import { allPlayables, catalogSkipped, catalogStamp, describeCard, type Playable } from "../bot/lib/catalog.ts";
+import { allPlayables, catalogPause, catalogSkipped, catalogStamp, describeCard, type Playable } from "../bot/lib/catalog.ts";
 import { readDeck, writeDeck } from "../bot/lib/decks.ts";
 import { checkDeck, type DeckCard, type DeckInput } from "../bot/lib/legality.ts";
 
@@ -34,6 +34,12 @@ function mainDeck(championName: string, pool: Playable[], domains: string[]): De
 }
 
 const stamp = catalogStamp();
+const pause = catalogPause();
+const hasRadiance = allPlayables().some((card) => card.sets.includes("RAD"));
+expect(pause.paused === !hasRadiance, "la pausa no coincide con la presencia de Radiance");
+if (pause.paused) {
+  expect(pause.missing.some((set) => set.setId === "RAD"), "parado, pero no por Radiance");
+}
 expect(stamp.cardCount === 1451, `el catálogo tiene ${stamp.cardCount} cartas, se esperaban 1451`);
 expect(stamp.fetchedAt !== null, "el manifiesto no tiene fetchedAt");
 expect(catalogSkipped() === 0, "hay cartas que el lector no entiende");

@@ -2,6 +2,8 @@
 
 Consultor de mazos de Riftbound. Las cartas viven en este repositorio, descargadas de [Riftcodex](https://api.riftcodex.com/cards), y los mazos se guardan con su estrategia y con el meta contra el que van.
 
+**Parado.** Radiance (RAD) salió el 23 de octubre de 2026 y Riftcodex todavía no la lista. Hasta que `npm run sync-cards` traiga cartas de ese set, el consultor no cita cartas ni debate mazos.
+
 El consultor no busca cartas en la web. Si una carta no está en `data/catalog/cards.json`, tiene que decirlo.
 
 ## Catálogo
