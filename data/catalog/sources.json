@@ -1,0 +1,50 @@
+{
+  "active": "openrift",
+  "sources": [
+    {
+      "id": "openrift",
+      "name": "OpenRift",
+      "status": "active",
+      "hasRadiance": true,
+      "grain": "Una carta y, aparte, sus impresiones. La descarga guarda una ficha por nombre.",
+      "auth": "Ninguna. Pide un User-Agent.",
+      "checkedOn": "2026-11-04",
+      "notes": "Origen de la descarga actual. El catálogo trae Radiance, el texto de errata cuando existe y los bans de constructed.",
+      "endpoints": {
+        "catalog": "https://openrift.app/api/v1/catalog",
+        "sets": "https://openrift.app/api/v1/sets",
+        "card": "https://openrift.app/api/v1/cards/{slug}",
+        "search": "https://openrift.app/api/v1/search"
+      }
+    },
+    {
+      "id": "rifthunt",
+      "name": "RiftHunt",
+      "status": "available",
+      "hasRadiance": true,
+      "grain": "Bulk de impresiones. Radiance está, pero el recuento por set no coincide con el de Riftcodex.",
+      "auth": "Ninguna.",
+      "checkedOn": "2026-11-04",
+      "notes": "El 4 nov 2026 el set RAD tenía fecha 2026-10-23. La búsqueda s:rad con unique=cards dio 188 cartas y unique=prints dio 250. La descarga todavía no normaliza este origen.",
+      "endpoints": {
+        "sets": "https://api.rifthunt.com/sets",
+        "bulk": "https://api.rifthunt.com/bulk/cards",
+        "search": "https://api.rifthunt.com/cards/search"
+      }
+    },
+    {
+      "id": "riftcodex",
+      "name": "Riftcodex",
+      "status": "missing-radiance",
+      "hasRadiance": false,
+      "grain": "Una fila por edición.",
+      "auth": "Ninguna, pero Cloudflare responde 403 a curl. El script antiguo pasaba por Chrome.",
+      "checkedOn": "2026-11-04",
+      "notes": "El 4 nov 2026 a las 11:23 (Europe/Madrid) había 1451 ediciones y 8 sets. El último era Vendetta. GET /cards?set_id=RAD devolvía 0. Por eso dejó de ser el origen activo.",
+      "endpoints": {
+        "cards": "https://api.riftcodex.com/cards",
+        "sets": "https://api.riftcodex.com/sets"
+      }
+    }
+  ]
+}

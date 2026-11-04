@@ -1,0 +1,4 @@
+{
+  "name": "RiftConsultor",
+  "install": "npm ci"
+}

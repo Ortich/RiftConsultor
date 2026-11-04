@@ -1,0 +1,114 @@
+[
+  {
+    "id": "OGN",
+    "name": "Origins",
+    "setType": "main",
+    "releasedAt": "2025-08-01",
+    "englishRelease": "2025-10-31",
+    "released": true
+  },
+  {
+    "id": "SFD",
+    "name": "Spiritforged",
+    "setType": "main",
+    "releasedAt": "2025-12-12",
+    "englishRelease": "2026-02-13",
+    "released": true
+  },
+  {
+    "id": "UNL",
+    "name": "Unleashed",
+    "setType": "main",
+    "releasedAt": "2026-04-10",
+    "englishRelease": "2026-05-08",
+    "released": true
+  },
+  {
+    "id": "VEN",
+    "name": "Vendetta",
+    "setType": "main",
+    "releasedAt": "2026-07-31",
+    "englishRelease": "2026-07-31",
+    "released": true
+  },
+  {
+    "id": "RAD",
+    "name": "Radiance",
+    "setType": "main",
+    "releasedAt": "2026-10-23",
+    "englishRelease": "2026-10-23",
+    "released": true
+  },
+  {
+    "id": "OGS",
+    "name": "Proving Grounds",
+    "setType": "supplemental",
+    "releasedAt": "2025-08-01",
+    "englishRelease": "2025-10-31",
+    "released": true
+  },
+  {
+    "id": "FND",
+    "name": "Founders",
+    "setType": "supplemental",
+    "releasedAt": "2024-01-01",
+    "englishRelease": null,
+    "released": true
+  },
+  {
+    "id": "ARC",
+    "name": "Arcane Box Set",
+    "setType": "supplemental",
+    "releasedAt": "2025-01-13",
+    "englishRelease": null,
+    "released": true
+  },
+  {
+    "id": "T1A",
+    "name": "T1 2025 Worlds Champion Player Bundle",
+    "setType": "supplemental",
+    "releasedAt": "2026-08-01",
+    "englishRelease": "2026-08-01",
+    "released": true
+  },
+  {
+    "id": "T1S",
+    "name": "T1 2025 Worlds Champion Signature Edition",
+    "setType": "supplemental",
+    "releasedAt": "2026-08-01",
+    "englishRelease": "2026-08-01",
+    "released": true
+  },
+  {
+    "id": "KDA",
+    "name": "K/DA Couture Collection",
+    "setType": "supplemental",
+    "releasedAt": "2026-11-03",
+    "englishRelease": "2026-11-03",
+    "released": true
+  },
+  {
+    "id": "SGN",
+    "name": "Secret Garden",
+    "setType": "supplemental",
+    "releasedAt": "2026-12-01",
+    "englishRelease": "2026-12-01",
+    "released": false
+  },
+  {
+    "id": "LGC",
+    "name": "Legacy",
+    "setType": "main",
+    "releasedAt": "2027-01-29",
+    "englishRelease": "2027-01-29",
+    "released": false
+  },
+  {
+    "id": "REC",
+    "name": "Reckoning",
+    "setType": "main",
+    "releasedAt": "2027-04-30",
+    "englishRelease": "2027-04-30",
+    "released": false
+  }
+]

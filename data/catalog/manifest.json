@@ -1,0 +1,11 @@
+{
+  "sourceId": "openrift",
+  "source": "https://openrift.app/api/v1/catalog",
+  "fetchedAt": "2026-11-04T15:45:31.162Z",
+  "cardCount": 1106,
+  "printingCount": 9051,
+  "setCount": 14,
+  "radianceCards": 183,
+  "sha256": "845ac47d094eb4d7706dff98d41ca0fc29d3a3135607a10c066eebf2f8805705",
+  "note": "Una carta por nombre. Los artes alternativos, acabados e idiomas no se guardan como cartas distintas."
+}
